@@ -1,0 +1,98 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 's3_sahre_project
+
+  Sample SAM Template for s3_sahre_project
+
+  '
+Globals:
+  Function:
+    Timeout: 3
+    Environment:
+      Variables:
+        BUCKET_NAME: !Ref Mybucket
+        DYNAMO_TABLE_NAME: !Ref UrlsInfoTable
+
+Resources:
+  Mybucket:
+    Type: AWS::S3::Bucket
+
+  UrlsInfoTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: s3_key
+          AttributeType: S
+        - AttributeName: short_key
+          AttributeType: S
+      KeySchema:
+        - AttributeName: s3_key
+          KeyType: HASH
+        - AttributeName: short_key
+          KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+
+  HelloWorldFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: hello_world/
+      Handler: app.handler
+      Runtime: python3.6
+      Policies:
+        - S3ReadPolicy:
+            BucketName:
+              !Ref Mybucket
+        - DynamoDBCrudPolicy:
+            TableName:
+              !Ref UrlsInfoTable
+      Events:
+        HelloWorld:
+          Type: Api
+          Properties:
+            Path: /
+            Method: get
+        ListBuckets:
+          Type: Api
+          Properties:
+            Path: /objects
+            Method: get
+        SortUrl:
+          Type: Api
+          Properties:
+            Path: /shares/
+            Method: post
+        ShareList:
+          Type: Api
+          Properties:
+            Path: /shares/
+            Method: get
+        DeleteObjects:
+          Type: Api
+          Properties:
+            Path: /shares/
+            Method: delete
+        DowloadObject:
+          Type: Api
+          Properties:
+            Path: /dowload/
+            Method: get
+
+Outputs:
+  HelloWorldApi:
+    Description: API Gateway endpoint URL for Prod stage for Hello World function
+    Value:
+      Fn::Sub: https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/
+  HelloWorldFunction:
+    Description: Hello World Lambda Function ARN
+    Value:
+      Fn::GetAtt:
+      - HelloWorldFunction
+      - Arn
+  HelloWorldFunctionIamRole:
+    Description: Implicit IAM Role created for Hello World function
+    Value:
+      Fn::GetAtt:
+      - HelloWorldFunctionRole
+      - Arn
