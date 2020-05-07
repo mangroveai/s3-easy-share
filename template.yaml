@@ -73,10 +73,10 @@ Resources:
           Properties:
             Path: /shares/
             Method: delete
-        DowloadObject:
+        DownloadObject:
           Type: Api
           Properties:
-            Path: /dowload/
+            Path: /download/
             Method: get
 
 Outputs:
